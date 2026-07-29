@@ -1,7 +1,7 @@
 import streamlit as st
 import time
+import json
 
-# Page configuration
 st.set_page_config(
     page_title="DSA Visualizer",
     page_icon="⚡",
@@ -9,86 +9,101 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Glassmorphism & Minimalist UI Styling
 st.markdown("""
     <style>
-    /* Dark Theme Setup */
     .stApp {
-        background-color: #0d1117;
-        color: #c9d1d9;
+        background-color: #0b0f17;
+        color: #e2e8f0;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     
-    /* Sidebar Styling */
     div[data-testid="stSidebar"] {
-        background-color: #161b22;
-        border-right: 1px solid #30363d;
+        background-color: #111827;
+        border-right: 1px solid #1f2937;
     }
 
-    /* Cards & Containers */
-    .metric-card {
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    /* Custom Array Visualization Container */
     .viz-container {
         display: flex;
         align-items: flex-end;
         justify-content: center;
-        gap: 8px;
-        height: 220px;
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-        padding: 1.5rem 1rem;
+        gap: 12px;
+        height: 240px;
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 12px;
+        padding: 1.5rem;
         margin: 1rem 0;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
     }
 
-    /* Array Bar Base */
     .viz-bar {
-        width: 38px;
-        border-radius: 4px 4px 0 0;
+        width: 42px;
+        border-radius: 6px 6px 0 0;
         display: flex;
         align-items: flex-end;
         justify-content: center;
-        padding-bottom: 6px;
-        font-weight: 600;
+        padding-bottom: 8px;
+        font-weight: 700;
         font-size: 0.85rem;
-        color: #0d1117;
-        transition: height 0.3s ease, background-color 0.3s ease;
+        color: #0b0f17;
+        transition: all 0.2s ease;
     }
 
-    /* Bar Color States */
     .bar-default { background-color: #38bdf8; }
     .bar-compare { background-color: #facc15; }
     .bar-swap { background-color: #f87171; }
     .bar-sorted { background-color: #4ade80; }
 
-    /* Node Box for Searching */
-    .node-box {
-        width: 48px;
-        height: 48px;
-        border-radius: 6px;
+    .node-container {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 1rem;
-        border: 2px solid #30363d;
-        background: #0d1117;
+        gap: 12px;
+        flex-wrap: wrap;
+        min-height: 240px;
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
     }
+
+    .node-card {
+        width: 56px;
+        height: 56px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        border: 2px solid #374151;
+        background: #1f2937;
+        color: #9ca3af;
+        transition: all 0.2s ease;
+    }
+
+    .node-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        margin-top: 2px;
+        letter-spacing: 0.05em;
+    }
+
+    .node-default { border-color: #374151; background: #1f2937; color: #9ca3af; }
+    .node-mid { border-color: #facc15; background: rgba(250, 204, 21, 0.15); color: #facc15; transform: scale(1.08); }
+    .node-bound { border-color: #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .node-found { border-color: #4ade80; background: rgba(74, 222, 128, 0.2); color: #4ade80; transform: scale(1.1); }
+    .node-active { border-color: #facc15; background: rgba(250, 204, 21, 0.15); color: #facc15; }
+    .node-visited { border-color: #818cf8; background: rgba(129, 140, 248, 0.15); color: #818cf8; }
+    .node-path { border-color: #4ade80; background: rgba(74, 222, 128, 0.2); color: #4ade80; transform: scale(1.08); }
     </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------------------------------------------------------
-# SIDEBAR NAVIGATION
-# -----------------------------------------------------------------------------
 st.sidebar.markdown("### ⚡ **DSA Visualizer**")
-st.sidebar.caption("Interactive State Visualizer")
+st.sidebar.caption("Interactive State Engine")
 
 selected_algo = st.sidebar.radio(
     "Select Algorithm",
@@ -99,15 +114,11 @@ selected_algo = st.sidebar.radio(
 st.sidebar.divider()
 delay = st.sidebar.slider("⏱️ Animation Delay (s)", 0.1, 1.5, 0.4, step=0.1)
 
-# Helper function to render modern bar graphs
 def render_bars(arr, highlights=[], swaps=[], sorted_idx=None):
     max_val = max(arr) if arr else 1
     bars_html = '<div class="viz-container">'
-    
     for idx, val in enumerate(arr):
-        height = max(15, int((val / max_val) * 160))
-        
-        # Color coding states
+        height = max(18, int((val / max_val) * 160))
         bar_class = "bar-default"
         if idx in swaps:
             bar_class = "bar-swap"
@@ -117,18 +128,67 @@ def render_bars(arr, highlights=[], swaps=[], sorted_idx=None):
             bar_class = "bar-sorted"
             
         bars_html += f'<div class="viz-bar {bar_class}" style="height: {height}px;">{val}</div>'
-    
     bars_html += '</div>'
     return bars_html
 
-# -----------------------------------------------------------------------------
-# ALGORITHM 1: BUBBLE SORT
-# -----------------------------------------------------------------------------
+def render_binary_nodes(arr, low=-1, mid=-1, high=-1, found=False):
+    nodes_html = '<div class="node-container">'
+    for idx, val in enumerate(arr):
+        node_class = "node-default"
+        label = ""
+
+        if found and idx == mid:
+            node_class = "node-found"
+            label = "TARGET"
+        elif idx == mid:
+            node_class = "node-mid"
+            label = "MID"
+        elif idx == low:
+            node_class = "node-bound"
+            label = "LOW"
+        elif idx == high:
+            node_class = "node-bound"
+            label = "HIGH"
+
+        nodes_html += f'''
+            <div class="node-card {node_class}">
+                <span>{val}</span>
+                <span class="node-label">{label}</span>
+            </div>
+        '''
+    nodes_html += '</div>'
+    return nodes_html
+
+def render_bfs_nodes(nodes, current=None, visited=[], path=[]):
+    nodes_html = '<div class="node-container">'
+    for n in nodes:
+        node_class = "node-default"
+        label = ""
+
+        if n in path:
+            node_class = "node-path"
+            label = "PATH"
+        elif n == current:
+            node_class = "node-active"
+            label = "CURRENT"
+        elif n in visited:
+            node_class = "node-visited"
+            label = "VISITED"
+
+        nodes_html += f'''
+            <div class="node-card {node_class}">
+                <span>{n}</span>
+                <span class="node-label">{label}</span>
+            </div>
+        '''
+    nodes_html += '</div>'
+    return nodes_html
+
 if selected_algo == "Bubble Sort":
     st.title("Bubble Sort")
     st.caption("Repeatedly steps through the array, compares adjacent elements, and swaps them if out of order.")
 
-    col1, col2 = st.columns([3, 1])
+    col1, _ = st.columns([3, 1])
     with col1:
         default_array = "45, 12, 89, 34, 67, 23, 90"
         user_input = st.text_input("Input Array (comma separated):", value=default_array)
@@ -148,28 +208,22 @@ if selected_algo == "Bubble Sort":
             n = len(arr)
             for i in range(n):
                 for j in range(0, n - i - 1):
-                    # Highlight items being compared
                     chart_box.markdown(render_bars(arr, highlights=[j, j+1], sorted_idx=n-i), unsafe_allow_html=True)
                     status_box.info(f"Comparing index `{j}` (`{arr[j]}`) and `{j+1}` (`{arr[j+1]}`)")
                     time.sleep(delay)
 
                     if arr[j] > arr[j + 1]:
-                        # Swap highlight
                         arr[j], arr[j + 1] = arr[j + 1], arr[j]
                         chart_box.markdown(render_bars(arr, swaps=[j, j+1], sorted_idx=n-i), unsafe_allow_html=True)
                         status_box.warning(f"Swapping `{arr[j+1]}` and `{arr[j]}`")
                         time.sleep(delay)
 
-            # Final state - all sorted
             chart_box.markdown(render_bars(arr, sorted_idx=0), unsafe_allow_html=True)
             status_box.success("🎉 Sorting complete!")
 
-# -----------------------------------------------------------------------------
-# ALGORITHM 2: BINARY SEARCH
-# -----------------------------------------------------------------------------
 elif selected_algo == "Binary Search":
     st.title("Binary Search")
-    st.caption("Efficient search algorithm that halves the search space on every iteration.")
+    st.caption("Halves the search space on each step by comparing target value against the middle element.")
 
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -184,11 +238,9 @@ elif selected_algo == "Binary Search":
         arr = []
 
     if arr:
+        chart_box = st.empty()
         status_box = st.empty()
-        display_box = st.empty()
-        
-        # Initial draw
-        display_box.write(f"Array: `{arr}`")
+        chart_box.markdown(render_binary_nodes(arr), unsafe_allow_html=True)
 
         if st.button("Start Search", type="primary"):
             low, high = 0, len(arr) - 1
@@ -196,61 +248,66 @@ elif selected_algo == "Binary Search":
 
             while low <= high:
                 mid = (low + high) // 2
-                display_box.markdown(
-                    f"**Low:** `{low}` (`{arr[low]}`) | "
-                    f"**Mid:** `{mid}` (`{arr[mid]}`) | "
-                    f"**High:** `{high}` (`{arr[high]}`)"
-                )
-
+                chart_box.markdown(render_binary_nodes(arr, low, mid, high), unsafe_allow_html=True)
+                
                 if arr[mid] == target:
+                    chart_box.markdown(render_binary_nodes(arr, low, mid, high, found=True), unsafe_allow_html=True)
                     status_box.success(f"🎯 Target `{target}` found at index `{mid}`!")
                     found = True
                     break
                 elif arr[mid] < target:
-                    status_box.info(f"`{arr[mid]}` < `{target}` → Target lies in the right half.")
+                    status_box.info(f"`{arr[mid]}` < `{target}` → Searching right half.")
                     low = mid + 1
                 else:
-                    status_box.info(f"`{arr[mid]}` > `{target}` → Target lies in the left half.")
+                    status_box.info(f"`{arr[mid]}` > `{target}` → Searching left half.")
                     high = mid - 1
 
                 time.sleep(delay)
 
             if not found:
-                status_box.error(f"Target `{target}` not found in array.")
+                status_box.error(f"Target `{target}` was not found in the array.")
 
-# -----------------------------------------------------------------------------
-# ALGORITHM 3: BFS TRAVERSAL
-# -----------------------------------------------------------------------------
 elif selected_algo == "BFS Shortest Path":
     st.title("BFS Shortest Path")
-    st.caption("Breadth-First Search finds the shortest path between two nodes in an unweighted graph.")
+    st.caption("Breadth-First Search systematically traverses graph nodes layer by layer to discover the shortest route.")
 
     default_graph = '{\n  "A": ["B", "C"],\n  "B": ["A", "D", "E"],\n  "C": ["A", "F"],\n  "D": ["B"],\n  "E": ["B", "F"],\n  "F": ["C", "E"]\n}'
-    graph_input = st.text_area("Adjacency List (JSON):", value=default_graph, height=160)
     
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([2, 1])
     with col1:
-        start_node = st.text_input("Start Node:", value="A")
+        graph_input = st.text_area("Adjacency List (JSON):", value=default_graph, height=140)
     with col2:
+        start_node = st.text_input("Start Node:", value="A")
         goal_node = st.text_input("Goal Node:", value="F")
 
-    if st.button("Explore BFS Path", type="primary"):
-        import json
-        try:
-            graph = json.loads(graph_input)
+    try:
+        graph = json.loads(graph_input)
+        all_nodes = sorted(list(graph.keys()))
+    except json.JSONDecodeError:
+        st.error("Invalid JSON format.")
+        graph = {}
+        all_nodes = []
+
+    if all_nodes:
+        chart_box = st.empty()
+        status_box = st.empty()
+        chart_box.markdown(render_bfs_nodes(all_nodes), unsafe_allow_html=True)
+
+        if st.button("Explore BFS Path", type="primary"):
             queue = [[start_node]]
             visited = set()
-            status_box = st.empty()
             found = False
 
             while queue:
                 path = queue.pop(0)
                 node = path[-1]
 
-                status_box.info(f"🔍 Exploring path: **{' ➔ '.join(path)}** | Current node: `{node}`")
+                chart_box.markdown(render_bfs_nodes(all_nodes, current=node, visited=list(visited)), unsafe_allow_html=True)
+                status_box.info(f"🔍 Exploring path: **{' ➔ '.join(path)}** | Current Node: `{node}`")
                 time.sleep(delay)
 
                 if node == goal_node:
+                    chart_box.markdown(render_bfs_nodes(all_nodes, visited=list(visited), path=path), unsafe_allow_html=True)
                     status_box.success(f"🏆 Shortest path found: **{' ➔ '.join(path)}**")
                     found = True
                     break
@@ -262,7 +319,4 @@ elif selected_algo == "BFS Shortest Path":
                             queue.append(path + [neighbor])
 
             if not found:
-                status_box.error("No path exists between start and target nodes.")
-
-        except json.JSONDecodeError:
-            st.error("Invalid JSON format.")
+                status_box.error(f"No path exists between `{start_node}` and `{goal_node}`.")
