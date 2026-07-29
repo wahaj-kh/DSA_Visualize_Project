@@ -116,7 +116,7 @@ delay = st.sidebar.slider("⏱️ Animation Delay (s)", 0.1, 1.5, 0.4, step=0.1)
 
 def render_bars(arr, highlights=[], swaps=[], sorted_idx=None):
     max_val = max(arr) if arr else 1
-    bars_html = '<div class="viz-container">'
+    bars_html = ['<div class="viz-container">']
     for idx, val in enumerate(arr):
         height = max(18, int((val / max_val) * 160))
         bar_class = "bar-default"
@@ -127,12 +127,12 @@ def render_bars(arr, highlights=[], swaps=[], sorted_idx=None):
         elif sorted_idx is not None and idx >= sorted_idx:
             bar_class = "bar-sorted"
             
-        bars_html += f'<div class="viz-bar {bar_class}" style="height: {height}px;">{val}</div>'
-    bars_html += '</div>'
-    return bars_html
+        bars_html.append(f'<div class="viz-bar {bar_class}" style="height: {height}px;">{val}</div>')
+    bars_html.append('</div>')
+    return "".join(bars_html)
 
 def render_binary_nodes(arr, low=-1, mid=-1, high=-1, found=False):
-    nodes_html = '<div class="node-container">'
+    nodes_html = ['<div class="node-container">']
     for idx, val in enumerate(arr):
         node_class = "node-default"
         label = ""
@@ -150,17 +150,12 @@ def render_binary_nodes(arr, low=-1, mid=-1, high=-1, found=False):
             node_class = "node-bound"
             label = "HIGH"
 
-        nodes_html += f'''
-            <div class="node-card {node_class}">
-                <span>{val}</span>
-                <span class="node-label">{label}</span>
-            </div>
-        '''
-    nodes_html += '</div>'
-    return nodes_html
+        nodes_html.append(f'<div class="node-card {node_class}"><span>{val}</span><span class="node-label">{label}</span></div>')
+    nodes_html.append('</div>')
+    return "".join(nodes_html)
 
 def render_bfs_nodes(nodes, current=None, visited=[], path=[]):
-    nodes_html = '<div class="node-container">'
+    nodes_html = ['<div class="node-container">']
     for n in nodes:
         node_class = "node-default"
         label = ""
@@ -175,14 +170,9 @@ def render_bfs_nodes(nodes, current=None, visited=[], path=[]):
             node_class = "node-visited"
             label = "VISITED"
 
-        nodes_html += f'''
-            <div class="node-card {node_class}">
-                <span>{n}</span>
-                <span class="node-label">{label}</span>
-            </div>
-        '''
-    nodes_html += '</div>'
-    return nodes_html
+        nodes_html.append(f'<div class="node-card {node_class}"><span>{n}</span><span class="node-label">{label}</span></div>')
+    nodes_html.append('</div>')
+    return "".join(nodes_html)
 
 if selected_algo == "Bubble Sort":
     st.title("Bubble Sort")
@@ -320,3 +310,5 @@ elif selected_algo == "BFS Shortest Path":
 
             if not found:
                 status_box.error(f"No path exists between `{start_node}` and `{goal_node}`.")
+
+                # the end 
