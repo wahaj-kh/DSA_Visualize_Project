@@ -22,6 +22,32 @@ st.markdown("""
         border-right: 1px solid #1f2937;
     }
 
+    /* Target input field labels (Input Array, Target Number, JSON, etc.) */
+    label[data-testid="stWidgetLabel"], .stMarkdown, p, span {
+        color: #f1f5f9 !important;
+        font-weight: 600 !important;
+    }
+
+    /* Target inputs, text areas, and number fields */
+    .stTextInput input, .stNumberInput input, .stTextArea textarea {
+        color: #ffffff !important;
+        background-color: #1f2937 !important;
+        border: 1px solid #4b5563 !important;
+        border-radius: 8px !important;
+    }
+
+    .stTextInput input:focus, .stNumberInput input:focus, .stTextArea textarea:focus {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 1px #38bdf8 !important;
+    }
+
+    /* Target JSON / Monospace inner text inside text area */
+    textarea {
+        font-family: 'Fira Code', 'Courier New', monospace !important;
+        font-size: 0.95rem !important;
+        color: #38bdf8 !important;
+    }
+
     .viz-container {
         display: flex;
         align-items: flex-end;
@@ -265,7 +291,7 @@ elif selected_algo == "BFS Shortest Path":
     
     col1, col2 = st.columns([2, 1])
     with col1:
-        graph_input = st.text_area("Adjacency List (JSON):", value=default_graph, height=140)
+        graph_input = st.text_area("Adjacency List (JSON):", value=default_graph, height=180)
     with col2:
         start_node = st.text_input("Start Node:", value="A")
         goal_node = st.text_input("Goal Node:", value="F")
@@ -310,5 +336,3 @@ elif selected_algo == "BFS Shortest Path":
 
             if not found:
                 status_box.error(f"No path exists between `{start_node}` and `{goal_node}`.")
-
-                # the end 
