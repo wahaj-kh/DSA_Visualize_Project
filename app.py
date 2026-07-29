@@ -16,36 +16,46 @@ st.markdown("""
         color: #e2e8f0;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    
-    div[data-testid="stSidebar"] {
-        background-color: #111827;
-        border-right: 1px solid #1f2937;
-    }
 
-    /* Target input field labels (Input Array, Target Number, JSON, etc.) */
-    label[data-testid="stWidgetLabel"], .stMarkdown, p, span {
-        color: #f1f5f9 !important;
+    /* Target main content labels specifically (avoiding top bar & global overrides) */
+    div[data-testid="stMainBlockContainer"] label[data-testid="stWidgetLabel"] p {
+        color: #f8fafc !important;
         font-weight: 600 !important;
+        font-size: 1rem !important;
     }
 
-    /* Target inputs, text areas, and number fields */
-    .stTextInput input, .stNumberInput input, .stTextArea textarea {
+    /* Target inputs, text areas, and number fields in the main container */
+    div[data-testid="stMainBlockContainer"] .stTextInput input, 
+    div[data-testid="stMainBlockContainer"] .stNumberInput input, 
+    div[data-testid="stMainBlockContainer"] .stTextArea textarea {
         color: #ffffff !important;
         background-color: #1f2937 !important;
         border: 1px solid #4b5563 !important;
         border-radius: 8px !important;
     }
 
-    .stTextInput input:focus, .stNumberInput input:focus, .stTextArea textarea:focus {
+    div[data-testid="stMainBlockContainer"] .stTextInput input:focus, 
+    div[data-testid="stMainBlockContainer"] .stNumberInput input:focus, 
+    div[data-testid="stMainBlockContainer"] .stTextArea textarea:focus {
         border-color: #38bdf8 !important;
         box-shadow: 0 0 0 1px #38bdf8 !important;
     }
 
-    /* Target JSON / Monospace inner text inside text area */
-    textarea {
+    /* Target JSON / Monospace inner text inside text area specifically */
+    div[data-testid="stMainBlockContainer"] textarea {
         font-family: 'Fira Code', 'Courier New', monospace !important;
         font-size: 0.95rem !important;
         color: #38bdf8 !important;
+    }
+
+    /* Sidebar explicit contrast fix */
+    div[data-testid="stSidebar"] {
+        background-color: #111827 !important;
+        border-right: 1px solid #1f2937 !important;
+    }
+
+    div[data-testid="stSidebar"] * {
+        color: #e2e8f0 !important;
     }
 
     .viz-container {
